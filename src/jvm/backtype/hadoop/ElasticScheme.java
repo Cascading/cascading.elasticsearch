@@ -8,32 +8,26 @@ package backtype.hadoop;
  * To change this template use File | Settings | File Templates.
  */
 
-import java.beans.ConstructorProperties;
-import java.io.IOException;
-import java.util.HashMap;
-
-import com.infochimps.elasticsearch.ElasticSearchInputFormat;
-import com.infochimps.elasticsearch.ElasticSearchOutputFormat;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.mapred.OutputFormat;
-import org.apache.hadoop.mapred.InputFormat;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.log4j.Logger;
-
 import cascading.scheme.Scheme;
 import cascading.tap.Tap;
-import cascading.tap.TapException;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
-
-import backtype.hadoop.ElasticUtil;
+import com.infochimps.elasticsearch.ElasticSearchInputFormat;
+import com.infochimps.elasticsearch.ElasticSearchOutputFormat;
+import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.elasticsearch.common.jackson.JsonParseException;
+
+import java.beans.ConstructorProperties;
+import java.io.IOException;
+import java.util.HashMap;
 
 public class ElasticScheme extends Scheme {
 
@@ -81,13 +75,16 @@ public class ElasticScheme extends Scheme {
     
     @Override
     public void sourceInit(Tap tap, JobConf jobConf) throws IOException {
-        jobConf.setInputFormat((Class<? extends InputFormat>) ElasticSearchInputFormat.class);
+        // Currently broken, as setInputFormat needs mapred.InputFormat, we take mapreduce.InputFormat
+        jobConf.setInputFormat(ElasticSearchInputFormat.class);
         LOGGER.info(String.format("Initializing ElasticSearch source tap - field: %s", getSourceFields()));
     }
 
     @Override public void sinkInit(Tap tap, JobConf jobConf) throws IOException {
         jobConf.setOutputKeyClass( NullWritable.class ); // be explicit
         jobConf.setOutputValueClass( MapWritable.class ); // be explicit
+
+        // Currently broken, as setInputFormat needs mapred.InputFormat, we take mapreduce.InputFormat
         jobConf.setOutputFormat((Class<? extends OutputFormat>) ElasticSearchOutputFormat.class);
 
         LOGGER.info(String.format("Initializing ElasticSearch sink tap - field: %s", getSinkFields()));
@@ -110,7 +107,7 @@ public class ElasticScheme extends Scheme {
         if (tupleEntry != null ) {
             String jsonData = tupleEntry.get(0).toString();
 
-            // parse json data and put into mapwritable record
+            // parse json data and put into MapWritable record
             try {
                 HashMap<String,Object> data = mapper.readValue(jsonData, HashMap.class);
                 record = (MapWritable) ElasticUtil.toWritable(data);
