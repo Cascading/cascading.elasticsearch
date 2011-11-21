@@ -13,8 +13,8 @@ import cascading.tap.Tap;
 import cascading.tuple.Fields;
 import cascading.tuple.Tuple;
 import cascading.tuple.TupleEntry;
-import com.infochimps.elasticsearch.ElasticSearchInputFormat;
-import com.infochimps.elasticsearch.ElasticSearchOutputFormat;
+import backtype.hadoop.ElasticSearchInputFormat;
+import backtype.hadoop.ElasticSearchOutputFormat;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.JobConf;
@@ -75,7 +75,6 @@ public class ElasticScheme extends Scheme {
     
     @Override
     public void sourceInit(Tap tap, JobConf jobConf) throws IOException {
-        // Currently broken, as setInputFormat needs mapred.InputFormat, we take mapreduce.InputFormat
         jobConf.setInputFormat(ElasticSearchInputFormat.class);
         LOGGER.info(String.format("Initializing ElasticSearch source tap - field: %s", getSourceFields()));
     }
@@ -83,9 +82,7 @@ public class ElasticScheme extends Scheme {
     @Override public void sinkInit(Tap tap, JobConf jobConf) throws IOException {
         jobConf.setOutputKeyClass( NullWritable.class ); // be explicit
         jobConf.setOutputValueClass( MapWritable.class ); // be explicit
-
-        // Currently broken, as setInputFormat needs mapred.InputFormat, we take mapreduce.InputFormat
-        jobConf.setOutputFormat((Class<? extends OutputFormat>) ElasticSearchOutputFormat.class);
+        jobConf.setOutputFormat(ElasticSearchOutputFormat.class);
 
         LOGGER.info(String.format("Initializing ElasticSearch sink tap - field: %s", getSinkFields()));
     }
