@@ -1,11 +1,12 @@
-(defproject cascalog-elasticsearch "0.1.0"
+(defproject cascading-elasticsearch "0.1.0"
   :description "Elasticsearch integration for Cascading and Cascalog."
-  :source-path "src/clj"
-  :java-source-path "src/jvm"
+  :java-source-path "src"
   :jvm-opts ["-Xmx768m" "-server"]
-  :repositories {"sonatype"
-                 "https://oss.sonatype.org/content/repositories/releases"}
-  :dependencies [[org.clojure/clojure "1.3.0"]
-                 [cascalog "1.8.4"]]
-  :dev-dependencies [[org.apache.hadoop/hadoop-core "0.20.2-dev"]
-                     [swank-clojure "1.4.0-SNAPSHOT"]])
+  :dependencies [[cascading/cascading-core "1.2.4"
+                  :exclusions [org.codehaus.janino/janino
+                               thirdparty/jgrapht-jdk1.6
+                               riffle/riffle]]
+                 [thirdparty/jgrapht-jdk1.6 "0.8.1"]
+                 [riffle/riffle "0.1-dev"]
+                 [log4j/log4j "1.2.16"]]
+  :dev-dependencies [[org.apache.hadoop/hadoop-core "0.20.2-dev"]])
