@@ -41,9 +41,9 @@ public class ElasticSearchInputFormat implements Configurable, InputFormat<Text,
     private String queryString;
 
     private static final String ES_REQUEST_SIZE = "elasticsearch.request.size";
-        // number of records to fetch at one time
+    // number of records to fetch at one time
     private static final String ES_NUM_SPLITS = "elasticsearch.num.input.splits";
-        // number of hadoop map tasks to launch
+    // number of hadoop map tasks to launch
     private static final String ES_QUERY_STRING = "elasticsearch.query.string";
 
     private static final String ES_CONFIG_NAME = "elasticsearch.yml";
@@ -54,15 +54,17 @@ public class ElasticSearchInputFormat implements Configurable, InputFormat<Text,
     private static final String ES_PLUGINS = "es.path.plugins";
     private static final String SLASH = "/";
 
-    public RecordReader<Text, Text> createRecordReader(InputSplit inputSplit,
-        TaskAttemptContext context) {
+    public RecordReader<Text, Text> getRecordReader(InputSplit is, JobConf jc, Reporter reporter) {
         return new ElasticSearchRecordReader();
     }
 
     /** The number of splits is specified in the Hadoop configuration object. */
-    public List<InputSplit> getSplits(JobContext context) {
-        setConf(context.getConfiguration());
+    public InputSplit[] getSplits(JobConf conf, int ignored) throws IOException {
+
+        setConf(conf);
+
         List<InputSplit> splits = new ArrayList<InputSplit>(numSplits.intValue());
+
         for (int i = 0; i < numSplits; i++) {
             Long size = (numSplitRecords == 1) ? 1 : numSplitRecords - 1;
             splits.add(new ElasticSearchSplit(queryString, i * numSplitRecords, size));
@@ -72,14 +74,14 @@ public class ElasticSearchInputFormat implements Configurable, InputFormat<Text,
                 numSplits * numSplitRecords, numHits % numSplits - 1));
         }
         LOG.info("Created [" + splits.size() + "] splits for [" + numHits + "] hits");
-        return splits;
+
+        return splits.toArray(new InputSplit[splits.size()]);
     }
 
     /**
      * Sets the configuration object, opens a connection to elasticsearch, and initiates the initial
      * search request.
      */
-    @Override
     public void setConf(Configuration configuration) {
         this.conf = configuration;
         this.indexName = conf.get(ES_INDEX_NAME);
@@ -101,7 +103,6 @@ public class ElasticSearchInputFormat implements Configurable, InputFormat<Text,
         initiate_search();
     }
 
-    @Override
     public Configuration getConf() {
         return conf;
     }
@@ -123,17 +124,6 @@ public class ElasticSearchInputFormat implements Configurable, InputFormat<Text,
             numSplits = numHits; // This could be bad
         }
         this.numSplitRecords = (numHits / numSplits);
-    }
-
-    // TODO: Implement!
-    public InputSplit[] getSplits(JobConf jobConf, int i) throws IOException {
-        return new InputSplit[0];
-    }
-
-    // TODO: Implement!
-    public RecordReader<Text, Text> getRecordReader(InputSplit inputSplit, JobConf jobConf,
-        Reporter reporter) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     protected class ElasticSearchRecordReader implements RecordReader<Text, Text> {
@@ -171,7 +161,7 @@ public class ElasticSearchInputFormat implements Configurable, InputFormat<Text,
             try {
                 String taskConfigPath = ElasticUtil.fetchFileFromCache(ES_CONFIG_NAME, conf);
                 LOG.info("Using [" + taskConfigPath + "] as es.config");
-                String taskPluginsPath = HadoopUtils.fetchArchiveFromCache(ES_PLUGINS_NAME, conf);
+                String taskPluginsPath = ElasticUtil.fetchArchiveFromCache(ES_PLUGINS_NAME, conf);
                 LOG.info("Using [" + taskPluginsPath + "] as es.plugins.dir");
                 System.setProperty(ES_CONFIG, taskConfigPath);
                 System.setProperty(ES_PLUGINS, taskPluginsPath + SLASH + ES_PLUGINS_NAME);
@@ -204,14 +194,13 @@ public class ElasticSearchInputFormat implements Configurable, InputFormat<Text,
             return response.hits().iterator();
         }
 
-        @Override
-        public boolean nextKeyValue() throws IOException {
+        public boolean next(Text key, Text val) throws IOException {
             if (hitsItr != null) {
                 if (recordsRead < recsToRead) {
                     if (hitsItr.hasNext()) {
                         SearchHit hit = hitsItr.next();
-                        currentKey = new Text(hit.id());
-                        currentValue = new Text(hit.sourceAsString());
+                        key.set(hit.id());
+                        val.set(hit.sourceAsString());
                         recordsRead += 1;
                         return true;
                     }
@@ -223,8 +212,8 @@ public class ElasticSearchInputFormat implements Configurable, InputFormat<Text,
                     hitsItr = fetchNextHits();
                     if (hitsItr.hasNext()) {
                         SearchHit hit = hitsItr.next();
-                        currentKey = new Text(hit.id());
-                        currentValue = new Text(hit.sourceAsString());
+                        key.set(hit.id());
+                        val.set(hit.sourceAsString());
                         recordsRead += 1;
                         return true;
                     }
@@ -233,24 +222,22 @@ public class ElasticSearchInputFormat implements Configurable, InputFormat<Text,
             return false;
         }
 
-        // CONVERT ABOVE METHODS down to this shit.
-        public boolean next(Text text, Text text1) throws IOException {
-            return false;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
         public Text createKey() {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
+            return new Text();
         }
 
         public Text createValue() {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
+            return new Text();
         }
 
         public long getPos() throws IOException {
-            return 0;  //To change body of implemented methods use File | Settings | File Templates.
+            return 0;
         }
 
-        @Override
+        public float getProgress() throws IOException {
+            return recordsRead;
+        }
+
         public void close() throws IOException {
             LOG.info("Closing record reader");
             client.close();
@@ -260,6 +247,7 @@ public class ElasticSearchInputFormat implements Configurable, InputFormat<Text,
             }
             LOG.info("Record reader closed.");
         }
+
 
     }
 }

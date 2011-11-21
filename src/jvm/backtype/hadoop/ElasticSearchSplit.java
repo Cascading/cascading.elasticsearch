@@ -1,21 +1,20 @@
 package backtype.hadoop;
 
-import java.io.IOException;
-import java.io.DataInput;
-import java.io.DataOutput;
-
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.InputSplit;
 
-public class ElasticSearchSplit implements Writable, InputSplit {
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+public class ElasticSearchSplit implements InputSplit {
 
     private String queryString;
     private long from;
     private long size;
 
     public ElasticSearchSplit() {}
-    
+
     public ElasticSearchSplit(String queryString, long from, long size) {
         this.queryString = queryString;
         this.from = from;
@@ -25,7 +24,7 @@ public class ElasticSearchSplit implements Writable, InputSplit {
     public String getQueryString() {
         return queryString;
     }
-    
+
     public long getFrom() {
         return from;
     }
@@ -33,25 +32,21 @@ public class ElasticSearchSplit implements Writable, InputSplit {
     public long getSize() {
         return size;
     }
-    
-    @Override
-    public String[] getLocations() {
-        return new String[] {};
+
+    public String[] getLocations() throws IOException {
+        return new String[]{};
     }
-    
-    @Override
-    public long getLength() {
+
+    public long getLength() throws IOException {
         return 0;
     }
 
-    @Override
     public void readFields(DataInput in) throws IOException {
         queryString = Text.readString(in);
         from = in.readLong();
         size = in.readLong();
     }
 
-    @Override
     public void write(DataOutput out) throws IOException {
         Text.writeString(out, queryString);
         out.writeLong(from);
