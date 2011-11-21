@@ -8,5 +8,7 @@
                                riffle/riffle]]
                  [thirdparty/jgrapht-jdk1.6 "0.8.1"]
                  [riffle/riffle "0.1-dev"]
-                 [log4j/log4j "1.2.16"]]
+                 [log4j/log4j "1.2.16"]
+                 [org.elasticsearch/elasticsearch "0.16.0"]
+                 [org.codehaus.jackson/jackson-mapper-asl "1.5.2"]]
   :dev-dependencies [[org.apache.hadoop/hadoop-core "0.20.2-dev"]])

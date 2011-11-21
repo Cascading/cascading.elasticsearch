@@ -20,7 +20,6 @@ import java.util.Map;
  * User: sritchie
  * Date: 11/15/11
  * Time: 10:14 AM
- * To change this template use File | Settings | File Templates.
  */
 public class ElasticTap extends Tap {
     String dbDriver;
