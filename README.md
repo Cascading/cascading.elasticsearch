@@ -1,13 +1,7 @@
-# cascalog-elasticsearch
+# Cascading-Elasticsearch
 
-FIXME: write description
+Cascading tap for Elasticsearch. IN DEVELOPMENT. Check back soon, please.
 
 ## Usage
 
-FIXME: write
-
-## License
-
-Copyright (C) 2011 FIXME
-
-Distributed under the Eclipse Public License, the same as Clojure.
+Stay away, completely alpha.
