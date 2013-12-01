@@ -7,3 +7,7 @@ Ping me at @sritchie09 on Twitter or here on Github if you're interested in deve
 ## Usage
 
 Stay away, completely alpha.
+
+## Active Alternatives
+
+See [Elasticsearch Hadoop](https://github.com/elasticsearch/elasticsearch-hadoop) for an active alternative which allows reading and writing with Cascading, Hive, Pig, and MapReduce.
